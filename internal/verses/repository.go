@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 )
@@ -15,6 +16,7 @@ import (
 type VerseState struct {
 	Verses       []string `json:"verses"`
 	CurrentIndex int      `json:"current_index"`
+	logger       *log.Logger
 }
 
 const (
@@ -22,59 +24,71 @@ const (
 	versesFile = "verses.txt"
 )
 
-func GetVerseOfTheDay() (string, error) {
+func GetVerseOfTheDay(log *log.Logger) (string, error) {
 	// Load or initialize state
-	state, err := loadOrInitialize()
+	state := NewVerseState(log)
+	err := state.loadOrInitialize()
 	if err != nil {
+		state.logger.Println(err)
 		return "", fmt.Errorf("could not load or initialize state: %w", err)
 	}
 	//state.reset()
 	// Get today's verse
 	verse := state.getNextVerse()
-	fmt.Printf("Today's verse (%d/%d):\n%s\n",
-		state.CurrentIndex, len(state.Verses), verse)
+	//fmt.Printf("Today's verse (%d/%d):\n%s\n",
+	//	state.CurrentIndex, len(state.Verses), verse)
 
 	// Save state
 	if err := state.save(); err != nil {
+		state.logger.Println(err)
 		return "", fmt.Errorf("could not save state: %w", err)
 	}
 
 	return verse, nil
 }
 
+func NewVerseState(logger *log.Logger) *VerseState {
+	return &VerseState{
+		Verses:       make([]string, 0),
+		CurrentIndex: 0,
+		logger:       logger,
+	}
+}
+
 // loadOrInitialize loads existing state or creates new shuffled state
-func loadOrInitialize() (*VerseState, error) {
+func (s *VerseState) loadOrInitialize() error {
 	// try to load existing states, which is a json file. the first time should return an error
 	//because the file should not exist.
 	data, err := os.ReadFile(stateFile)
 	if err == nil {
-		var state VerseState
-		if err := json.Unmarshal(data, &state); err != nil {
-			return nil, fmt.Errorf("error parsing the state file: %w", err)
+		if err := json.Unmarshal(data, &s); err != nil {
+			s.logger.Printf("could not unmarshal state file: %v", err)
+			return fmt.Errorf("error parsing the state file: %w", err)
 		}
-		fmt.Println("Loaded existing state")
-		return &state, nil
+		//fmt.Println("Loaded existing state")
+		return nil
 	}
 
 	// If the state file does not exist
 	// In this case, the first time running the application
-	fmt.Println("Loaded new state")
+	//fmt.Println("Loaded new state")
 	verses, err := loadVersesFromFile()
 	if err != nil {
-		return nil, fmt.Errorf("error loading verses: %w", err)
+		s.logger.Printf("could not load verses from file: %v", err)
+		return fmt.Errorf("error loading verses: %w", err)
 	}
 	state := &VerseState{
 		Verses:       verses,
 		CurrentIndex: 0,
 	}
 
-	// shuffle the verses. Not needed but for fun
+	// shuffle the verses.
 	rand.Shuffle(len(state.Verses), func(i, j int) {
 		state.Verses[i], state.Verses[j] = state.Verses[j], state.Verses[i]
 	})
 
-	fmt.Println("Loaded new verses")
-	return state, nil
+	//fmt.Println("Loaded new verses")
+	return nil
 }
 
 // loadVersesFromFile reads from a text file where the verses are found.
@@ -111,12 +125,13 @@ func (s *VerseState) getNextVerse() string {
 	// check if we've used all verse - reshuffle for next cycle
 	if s.CurrentIndex >= len(s.Verses) {
 		fmt.Println("Completed full cycle! Reshuffling ")
+		s.logger.Println("Completed full cycle! Reshuffling for next round...")
 		rand.Shuffle(len(s.Verses), func(i, j int) {
 			s.Verses[i], s.Verses[j] = s.Verses[j], s.Verses[i]
 		})
 		s.CurrentIndex = 0
 	}
-
+	s.logger.Println("Verse of the day: ", verse)
 	return verse
 }
 
@@ -124,10 +139,12 @@ func (s *VerseState) getNextVerse() string {
 func (s *VerseState) save() error {
 	data, err := json.MarshalIndent(s, "", "	")
 	if err != nil {
+		s.logger.Printf("could not marshal state: %v", err)
 		return fmt.Errorf("error serializing verses: %w", err)
 	}
 
 	if err := os.WriteFile(stateFile, data, 0644); err != nil {
+		s.logger.Printf("could not save state: %v", err)
 		return fmt.Errorf("error writing to state file: %w", err)
 	}
 	return nil

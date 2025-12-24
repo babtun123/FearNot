@@ -1,28 +1,40 @@
 package orchestrator
 
-import (
-	"FearNot/internal/verses"
-	"fmt"
-)
+import "fmt"
 
 type Orchestrator struct {
-	VerseOfTheDay string
+	VerseOfTheDay     string
+	ScriptureOfTheDay string
 }
 
-func NewOrchestrator() error {
-	var orchestrator Orchestrator
-
-	orchestrator.VerseOfTheDay = orchestrator.getVerseOfTheDay()
-
-	return nil
-}
-
-func (orchestrator *Orchestrator) getVerseOfTheDay() string {
-	// Get the verse of the day
-	verse, err := verses.GetVerseOfTheDay()
-	if err != nil {
-		// in the future log an error here
-		fmt.Println("could not get verse of day")
+func NewOrchestrator(verseOfTheDay string, ScriptureText string) *Orchestrator {
+	return &Orchestrator{
+		VerseOfTheDay:     verseOfTheDay,
+		ScriptureOfTheDay: ScriptureText,
 	}
-	return verse
 }
+
+func (o *Orchestrator) Run() {
+	fmt.Println("Verse of the day:", o.VerseOfTheDay)
+	fmt.Println("Scripture text: ")
+	fmt.Println(o.ScriptureOfTheDay)
+}
+
+//func (orchestrator *Orchestrator) getVerseOfTheDay() string {
+//	// Get the verse of the day
+//	verse, err := verses.GetVerseOfTheDay()
+//	if err != nil {
+//		// in the future log an error here
+//		fmt.Println("could not get verse of day")
+//	}
+//	return verse
+//}
+//
+//func (orchestrator *Orchestrator) fetchScriptureOfTheDay() string {
+//	// Get the scripture of the day
+//	scr, err := scripture.Run(orchestrator.VerseOfTheDay)
+//	if err != nil {
+//		fmt.Println("could not fetch scripture of day")
+//	}
+//	return scr
+//}
