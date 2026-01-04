@@ -101,11 +101,11 @@ func GenerateEmail(logger *log.Logger, emailList []string, verseOfTheDay, Script
 		err := em.sendDailyVerse(config, verse)
 
 		if err != nil {
-			logger.Println("Error sending daily verse email to")
-			fmt.Printf("❌ Error sending email to '%s': %v\n", email, err)
+			logger.Println("Error sending daily verse email")
+			fmt.Printf("Error sending email to '%s': %v\n", email, err)
 		} else {
-			logger.Println("Daily verse email sent successfully")
-			fmt.Printf("✅ Email sent successfully to: '%s'\n!", email)
+			logger.Println("Daily verse email sent successfully to", email)
+			fmt.Printf("Email sent successfully to: '%s'\n!", email)
 		}
 	}
 
