@@ -1,8 +1,7 @@
 package main
 
 import (
-	"FearNot/internal/email"
-	"FearNot/internal/orchestrator"
+	"FearNot/internal/Explanation"
 	"FearNot/internal/scripture"
 	"FearNot/internal/verses"
 	"bufio"
@@ -34,22 +33,27 @@ func main() {
 		logger.Println(err)
 	}
 
+	// Get Verse explanation
+	explanation, err := Explanation.GetVerseExplanation(ScriptureText)
+	if err != nil {
+		logger.Println(err)
+	}
+	fmt.Println(explanation)
+
 	// Print verse and scripture text
 	fmt.Println("Verse of the day:", verseOfTheDay)
 	fmt.Println("Scripture text: ")
 	fmt.Println(ScriptureText)
 
 	// Read from email list file
-	emailList := openEmailSendList(logger)
+	//emailList := openEmailSendList(logger)
 
 	// Send the email
-	err = email.GenerateEmail(logger, emailList, verseOfTheDay, ScriptureText)
-	if err != nil {
-		logger.Println(err)
-	}
+	//err = email.GenerateEmail(logger, emailList, verseOfTheDay, ScriptureText)
+	//if err != nil {
+	//	logger.Println(err)
+	//}
 
-	NewOrchestrator := orchestrator.NewOrchestrator(verseOfTheDay, ScriptureText)
-	NewOrchestrator.Run()
 }
 
 // openEmailSendList opens and reads email list file
